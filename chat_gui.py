@@ -66,10 +66,17 @@ SCROLL_MIN_STEP = 1.0
 MAX_MATH_CACHE_ITEMS = 128
 DEFAULT_BLOCK_WIDTH = 560
 INLINE_MATH_HEIGHT_FACTOR = 1.04
-INLINE_TALL_MATH_HEIGHT_FACTOR = 1.72
+INLINE_TALL_MATH_HEIGHT_FACTOR = 1.32
 BLOCK_MATH_TARGET_HEIGHT_FACTOR = 2.6
 BLOCK_MATH_MAX_SCALE = 2.8
+BLOCK_MATH_SCALE_MULTIPLIER = 1.45
 MATRIX_BLOCK_MATH_SCALE_MULTIPLIER = 2.0
+BLOCK_MATH_MIN_VERTICAL_PADDING_PX = 10
+BLOCK_MATH_VERTICAL_PADDING_FACTOR = 0.5
+INLINE_MATH_RENDER_BORDER_PT = 1
+BLOCK_MATH_RENDER_BORDER_PT = 5
+MATRIX_BLOCK_MATH_RENDER_BORDER_PT = 8
+MATH_RENDER_CACHE_VERSION = "v2"
 AUTO_SCROLL_BOTTOM_THRESHOLD = 24
 MAX_ATTACHMENT_TEXT_CHARS = 60000
 SUPPORTED_DOCUMENT_EXTENSIONS = {".md", ".txt", ".docx", ".doc", ".xlsx", ".xls", ".csv", ".html"}
@@ -714,6 +721,13 @@ def _is_matrix_like_latex(source: str) -> bool:
     )
 
 
+def _block_math_vertical_padding(font_height: int) -> int:
+    return max(
+        BLOCK_MATH_MIN_VERTICAL_PADDING_PX,
+        int(round(max(1, font_height) * BLOCK_MATH_VERTICAL_PADDING_FACTOR)),
+    )
+
+
 class SvgArtifactWidget(QWidget):
     def __init__(
         self,
@@ -750,6 +764,13 @@ class SvgArtifactWidget(QWidget):
         return self.sizeHint()
 
     def _scaled_size(self, width_limit: int) -> QSize:
+        content_size = self._scaled_content_size(width_limit)
+        if self._display == "inline":
+            return content_size
+        vertical_padding = _block_math_vertical_padding(self.fontMetrics().height())
+        return QSize(content_size.width(), content_size.height() + vertical_padding * 2)
+
+    def _scaled_content_size(self, width_limit: int) -> QSize:
         width_limit = max(1, width_limit)
         source = self._default_size
         if self._display == "inline":
@@ -768,7 +789,7 @@ class SvgArtifactWidget(QWidget):
         return QSize(max(1, int(source.width() * scale)), max(1, int(source.height() * scale)))
 
     def _target_rect(self) -> QRectF:
-        target_size = self._scaled_size(self.width() if self.width() > 0 else DEFAULT_BLOCK_WIDTH)
+        target_size = self._scaled_content_size(self.width() if self.width() > 0 else DEFAULT_BLOCK_WIDTH)
         x = 0.0
         if self._display == "block":
             x = max(0.0, (self.width() - target_size.width()) / 2.0)
@@ -820,6 +841,13 @@ class RasterArtifactWidget(QWidget):
         return self.sizeHint()
 
     def _scaled_size(self, width_limit: int) -> QSize:
+        content_size = self._scaled_content_size(width_limit)
+        if self._display == "inline":
+            return content_size
+        vertical_padding = _block_math_vertical_padding(self.fontMetrics().height())
+        return QSize(content_size.width(), content_size.height() + vertical_padding * 2)
+
+    def _scaled_content_size(self, width_limit: int) -> QSize:
         width_limit = max(1, width_limit)
         source = self._pixmap.size()
         if source.width() <= 0 or source.height() <= 0:
@@ -840,7 +868,7 @@ class RasterArtifactWidget(QWidget):
         return QSize(max(1, int(source.width() * scale)), max(1, int(source.height() * scale)))
 
     def _target_rect(self) -> QRect:
-        target_size = self._scaled_size(self.width() if self.width() > 0 else DEFAULT_BLOCK_WIDTH)
+        target_size = self._scaled_content_size(self.width() if self.width() > 0 else DEFAULT_BLOCK_WIDTH)
         x = 0
         if self._display == "block":
             x = max(0, (self.width() - target_size.width()) // 2)
@@ -869,6 +897,8 @@ class MathDisplayWidget(QWidget):
         self._block_scale_multiplier = (
             MATRIX_BLOCK_MATH_SCALE_MULTIPLIER
             if display == "block" and _is_matrix_like_latex(raw_source)
+            else BLOCK_MATH_SCALE_MULTIPLIER
+            if display == "block"
             else 1.0
         )
         self._artifact_widget: QWidget | None = None
@@ -1729,10 +1759,12 @@ class MathRenderService(QObject):
 def _build_tex_document(latex: str, display: str) -> str:
     if display == "block":
         math_body = f"\\[{latex}\\]"
+        border_pt = MATRIX_BLOCK_MATH_RENDER_BORDER_PT if _is_matrix_like_latex(latex) else BLOCK_MATH_RENDER_BORDER_PT
     else:
         math_body = f"\\({latex}\\)"
+        border_pt = INLINE_MATH_RENDER_BORDER_PT
     return rf"""
-\documentclass[preview,border=1pt]{{standalone}}
+\documentclass[preview,border={border_pt}pt]{{standalone}}
 \usepackage{{amsmath,amssymb,amsfonts,mathtools,bm}}
 \usepackage{{xcolor}}
 \begin{{document}}
@@ -1742,7 +1774,7 @@ def _build_tex_document(latex: str, display: str) -> str:
 
 
 def _formula_cache_key(latex: str, display: str) -> str:
-    payload = f"v1::{display}::{latex}".encode("utf-8")
+    payload = f"{MATH_RENDER_CACHE_VERSION}::{display}::{latex}".encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
