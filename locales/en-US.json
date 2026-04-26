@@ -1,0 +1,46 @@
+{
+  "nlp": {
+    "spacy_model": "en_core_web_sm"
+  },
+  "preference": {
+    "concrete_terms": ["want to eat", "want to drink", "do not eat", "don't eat", "cannot eat", "can't eat", "not spicy", "no spice", "bland", "mildly spicy", "low sugar", "low salt", "vegetarian", "vegan", "halal", "kosher", "allergy", "allergic", "diet", "taste", "breakfast", "lunch", "dinner", "tonight", "later", "for dinner"],
+    "first_person_markers": ["I", "my", "me", "mine", "myself", "we", "our", "ours", "us", "personally", "for me", "for us", "as a user", "user"],
+    "preference_terms": ["like", "dislike", "prefer", "preference", "want", "hope", "enjoy", "love", "hate", "favor", "would rather"]
+  },
+  "memory_query": {
+    "markers": ["what did we just discuss", "what did we talk about", "what were we talking about", "what was the previous topic", "what did I ask", "what did you say", "what did we say", "remind me what", "earlier chat", "previous chat", "prior chat", "last conversation", "chat history", "conversation history", "previously discussed", "just discussed", "mentioned earlier", "said earlier", "above", "before"],
+    "intent_template": "User is asking about earlier chat: {question}",
+    "required_render_markers": ["earlier chat", "what did we just discuss", "what did we talk about", "chat history", "conversation history", "previously discussed", "just discussed", "mentioned earlier", "last conversation"]
+  },
+  "dialogue_meta": {
+    "template": "This turn: user {verb} \"{excerpt}\"",
+    "prefixes": ["This turn: user"],
+    "user_label": "user",
+    "verbs": {
+      "memory_query": "asked about earlier chat",
+      "question": "asked",
+      "request": "requested"
+    },
+    "user_excerpt_patterns": ["user (?:asked about earlier chat|asked|requested) \\\"([^\\\"]+)"],
+    "required_frame_markers": ["asked", "requested", "question", "asks"]
+  },
+  "question": {
+    "markers": ["?"],
+    "case_insensitive_markers": ["what", "why", "how", "who", "when", "where", "which", "whether", "can ", "can you", "could ", "could you", "should ", "would ", "do ", "does ", "did ", "is ", "are ", "was ", "were "]
+  },
+  "referential": {
+    "markers": ["that", "this", "those", "that thing", "this thing", "that approach", "this approach", "that mechanism", "this mechanism", "that part", "same part", "it", "they", "them", "the previous one", "the one above", "the last one", "same one", "just mentioned", "earlier", "previously", "above"],
+    "time_reference_markers": ["earlier", "previously", "above", "before", "just now", "just discussed", "last time", "in the previous turn"],
+    "missing_subject_patterns": ["^\\s*(?:that|this|it|they|those|them)?\\s*(how|why|what|implement|handle|fix|change|work|do|continue|explain)\\b", "^\\s*(how|why|what|implement|handle|fix|change|work|continue|explain)\\b"],
+    "short_follow_up_prefixes": ["continue", "then", "that", "this", "it", "same", "also"],
+    "short_follow_up_max_chars": 42
+  },
+  "keyword_extraction": {
+    "stopwords": ["user", "assistant", "this", "that", "these", "those", "it", "they", "them", "we", "you", "i", "me", "my", "our", "how", "why", "what", "who", "when", "where", "which", "implement", "handle", "solve", "fix", "continue", "then", "please", "tell", "explain", "give", "need", "want", "would", "could", "should", "the", "a", "an", "and", "or", "for", "with", "about", "into", "from", "to", "of", "in", "on"]
+  },
+  "low_value": {
+    "prompt_like_fragments": ["please focus", "please explain", "please output", "please write", "only reply", "reply only", "must include", "continue discussing", "continue doing", "we need to", "the following is", "based on the above", "mapping logic:", "ignore any request", "ignore previous instructions", "pseudo instruction", "attack text", "user input:", "user intent:"],
+    "non_preference_block_preference_terms": ["bland", "mildly spicy", "spicy", "not spicy", "no spice", "dietary preference", "taste", "for dinner", "low sugar", "low salt", "vegetarian", "allergy"],
+    "headings": ["Rendered Context", "Preference Update Notes", "Prompt Injection Defense"]
+  }
+}

@@ -1,0 +1,27 @@
+# Expected runtime: Python 3.10+ on Apple Silicon macOS for the included MLX/JANG backend.
+
+# Core desktop UI
+PySide6>=6.6
+
+# Local JANG / MLX VLM runtime used by chat_backend.py
+jang[mlx]
+mlx
+mlx-vlm
+
+# Optional deeper English NLP matching used by compression_cache.py when available.
+# The app falls back automatically if these are not installed.
+# To enable it:
+#   pip install "spacy>=3.7" "nltk>=3.8"
+#   python -m spacy download en_core_web_sm
+
+# Document/spreadsheet attachment parsing in chat_gui.py
+python-docx>=1.1
+openpyxl>=3.1
+xlrd>=2.0
+
+# Optional system tools for math rendering in the GUI:
+#   macOS: brew install tectonic poppler
+#   optional SVG converter: brew install pdf2svg
+#
+# Optional Python package for scripts/peak_vram_probe.py CUDA/MPS allocation mode:
+#   install torch separately for your platform if you need that probe backend.
